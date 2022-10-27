@@ -8,6 +8,7 @@
 use crate::common::{CallbackId, MouseActions, MouseButton, MouseEvent, ScrollDirection};
 use std::{
     collections::HashMap,
+    convert::TryInto,
     fs::File,
     io::{Error, ErrorKind, Result, Write},
     os::{
@@ -17,7 +18,6 @@ use std::{
     sync::{Arc, Mutex},
     thread,
     time::Duration,
-    convert::TryInto
 };
 
 pub struct UInputMouseManager {
@@ -99,8 +99,12 @@ impl UInputMouseManager {
         };
 
         // SAFETY: either casting [u8] to [u8], or [u8] to [i8], which is the same size
+        #[cfg(target_arch = "armv7")]
         let name_bytes =
             unsafe { &*("Mouce Lib Fake Mouse".as_ref() as *const [u8] as *const [u8]) };
+        #[cfg(not(target_arch = "armv7"))]
+            let name_bytes =
+                unsafe { &*("Mouce Lib Fake Mouse".as_ref() as *const [u8] as *const [i8]) };
         // Panic if we're doing something really stupid
         // + 1 for the null terminator; usetup.name was zero-initialized so there will be null
         // bytes after the part we copy into
